@@ -1,0 +1,206 @@
+#include <string.h>
+#include <vector>
+#include <fstream>
+#include <iostream>
+
+using namespace std;
+
+class Contato {
+
+    static int contador;
+
+    int cod;
+
+    string nome;
+    string telefone;
+    string email;
+    vector <Contato*> contAmigo;
+
+    public:
+
+    static int getcontador (){ // criando um metodo para pegar o contador 
+        Contato::contador;
+    }
+
+    static void inccontador (){ // criando um metodo de incremento 
+        Contato::contador++;
+    }
+
+    Contato (){ // construtor da classe
+        cod=getcontador ();
+        inccontador ();
+        
+    }
+
+    
+    // string para obter o nome do contato
+    string getNome(){
+        return this->nome;
+    }
+    // ibter telefone
+    string getTelefone(){
+        return this->telefone;
+    }
+    //obter o email get(para aceessar o  que estar privado)
+    string getEmail(){
+        return this->email;
+    }
+    // void para definir o nome e (void não retorna a nada)
+    void setNome(string nome){
+        this->nome=nome;
+    }
+    void setTelefone(string telefone){
+        this->telefone=telefone;
+    }
+    void setEmail(string email){
+        this->email=email;
+    }
+    // para criar um contato 
+    static Contato* Adicionar (){
+        
+        // o uso do ponteiro * serve para alocar um objeto no espaço de memoria, é preciso usar o "new class ()"
+        Contato*c = new Contato (); 
+        string nome, telefone, email;
+        cout << "Digite o nome: " << endl;
+        cin.ignore ();
+        getline (cin,nome);
+        cout << "Digite o telefone: " << endl;
+        getline (cin, telefone);
+        cout << "Digite o email: " << endl;
+        getline (cin, email);
+
+        c->setEmail (email);
+        c->setNome (nome);
+        c->setTelefone (telefone);
+
+        return c;
+
+    }
+
+        // criando lista de contato de amigos 
+     void AdicionarcontAmigo (Contato* newAmigo){
+
+        this->contAmigo.push_back (newAmigo);
+        newAmigo -> AdicionarcontAmigo (this);
+ };
+
+    // listar os contatos
+    static void Listar (vector <Contato*>contatos){
+        int contador=0;
+
+        for (Contato* c : contatos) {
+
+            contador ++;
+            cout << "Contato " << contador << endl; //indicando qual contato será informado
+            cout << "Nome: " << c->getNome() << endl; //imprimindo o nome do contato
+            cout << "Telefone: " << c->getTelefone() << endl; //imprimindo o telefone do contato
+            cout << "Email: " << c->getEmail() << endl; //imprimindo o email do contato
+        }
+
+    }
+};
+
+class Persistencia{
+
+    public:
+    //metodo que divide uma string em duas e retorna a segunda parte
+    static string split(string str, string separator){ //str = string que será dividida; separator = substring de str que será descartada
+        int posIni = separator.size(); //calcula o tamanho da string 'separator'
+        int tam = str.size() - posIni; //calcula a quantidade de caracteres que a string final obterá
+        return str.substr(posIni, tam); //retorna a substring desejada
+    }
+    //obtendo lista de contatos
+    static vector<Contato *> getLista(){
+
+        vector<Contato *> contatos; //criando um vector de ponteiros de Contatos
+        ifstream lista; //declarando um arquivo de texto para leitura
+        lista.open("Lista_Contatos.txt"); //abrindo o arquivo de texto
+
+        if(lista.is_open()){ //verificando se o arquivo está aberto
+            string linha; //declarando uma variavel auxiliar do tipo string
+            while(!lista.eof()){ //verifica se não está no fim do arquivo; mesmo que while(lista.eof() == false)
+                Contato *c = new Contato(); //declarando um novo contato
+                getline(lista, linha); //obtendo a linha do arquivo
+                if(linha == "") break; //verificando se a linha está vazia, caso a linha esteja vazia encerra o loop
+                c->setNome(Persistencia::split(linha, "Nome: ")); //declarando o nome do contato
+                getline(lista, linha);
+                c->setTelefone(Persistencia::split(linha, "Telefone: ")); //declarando o telefone do contato
+                getline(lista, linha);
+                c->setEmail(Persistencia::split(linha, "Email: ")); //declarando o email do contato
+                contatos.push_back(c); //adicionando o contato no vector
+            }
+            lista.close(); //fechando o arquivo de leitura
+        }
+        else{ //caso o arquivo não tenha sido aberto, logo houve erro e deve-se criar um arquivo inicial
+            ofstream nova_Lista; //declarando um arquivo de escrita
+            nova_Lista.open("Lista_Contatos.txt"); //abrindo o arquivo de escrita
+            nova_Lista.close(); //fechando o arquivo de escrita
+        }
+        
+        return contatos; //retornando o vector
+    }
+    //salvando a lista de contatos
+    static void salvaLista(vector<Contato *> contatos){
+        ofstream lista; //declarando um arquivo de escrita 
+        lista.open("Lista_Contatos.txt"); //abrindo o arquivo de escrita
+        if(lista.is_open()){ //verificando se o arquivo está aberto
+            for(Contato * c : contatos){ //percorrendo o vector de contatos
+            lista << "Nome: " << c->getNome() << endl; //escrevendo o nome do contato
+            lista << "Telefone: " << c->getTelefone() << endl; //escrevendo o telefone do contato
+            lista << "Email: " << c->getEmail() << endl; //escrevendo o email do contato
+            }
+        }
+        else  cout << "Não foi possivel criar o arquivo." << endl; //houve algum erro
+        lista.close(); //fechando o arquivo
+    }
+
+};
+
+class Amizade{
+
+    int cod1, cod2;
+
+    public:
+
+// criando construtor
+
+    Amizade (int cod1, int cod2){ 
+        this->cod1 = cod1;
+        this->cod2 = cod2;
+    }
+    int getcod1 (){
+
+        return cod1;
+    }
+    int getcod2 (){
+
+        return cod2;
+    }
+};
+
+
+
+int main(){
+
+    vector<Contato *> contatos = Persistencia::getLista(); //declarando o vector de contatos e adicionando os contatos existentes na lista
+    char opcao; //declarando uma variavel auxiliar do tipo char
+    do{
+        cout << "<------------Menu------------>" << endl; //iniciando o menu
+        cout << "1- Adicionar contato" << endl; //opcao 1
+        cout << "2- Listar contatos" << endl; //opcao 2
+        cout << "3- Salvar lista de contatos" << endl; //opcao 3
+        cout << "0- Sair" << endl; //opcao 0
+        cin >> opcao; //obtendo a opcao desejada pelo usuario
+        if(opcao == '1'){ //caso a opcao seja 1
+            Contato *contato = Contato::Adicionar(); // criando um novo contato
+            contatos.push_back(contato); //adicionando o contato na lista
+        }
+        if(opcao == '2'){ //caso a opcao seja 2
+            Contato::Listar(contatos); //listando os contatos presentes na lista
+        }
+        if(opcao == '3'){ //caso a opcao seja 3
+            Persistencia::salvaLista(contatos); //salvando a lista de contatos em um arquivo de texto
+        }
+    }while(opcao != '0'); //caso a opcao seja 0 o loop é encerrado, caso contrario o menu reaparece
+    return 0;
+}
